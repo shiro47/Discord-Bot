@@ -4,6 +4,7 @@ import functions
 from tinydb import TinyDB, Query
 
 db = TinyDB('db.json')
+twitch_db = TinyDB('twitch_db.json')
 user = Query()
 
 def embed_pred():
@@ -25,6 +26,19 @@ def creating_rank_dict():
             if platform1!=None and player!=None:
                 players.update({player:functions.get_rankScore(platform1,player)})                   
     return players
+
+def create_streamers_list():
+    streamers={}
+    for x in iter(twitch_db):
+            for streamer in x.items():
+                if streamer[0]=='streamer_name':
+                    status=functions.check_stream_status(streamer[1])
+                    if status!=False:
+                        streamers.update({streamer[1]: status[1]})
+                    else:
+                        continue
+    return streamers
+
 
 def get_discordID(gameID):
     for x in db.search(user.ID == gameID):
