@@ -19,9 +19,16 @@ def pred_threshold():
         time.sleep(5)
         www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
     if www2.status_code==200:
-        parsed_json=(json.dumps(www2.json()))
-        a=(json.loads(parsed_json)["RP"]["PC"])
-        b=(json.loads(parsed_json)["AP"]["PC"])
+        while True:
+            try:
+                parsed_json=(json.dumps(www2.json()))
+                a=(json.loads(parsed_json)["RP"]["PC"])
+                b=(json.loads(parsed_json)["AP"]["PC"])
+            except KeyError:
+                www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+                time.sleep(5)
+                continue
+            break
         return a['val'],a['totalMastersAndPreds'],b['val'],b['totalMastersAndPreds']
     else:
         print('ERROR',www2.status_code)
@@ -33,8 +40,15 @@ def get_rankScore(platform,player):
         time.sleep(5)
         www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=os.getenv('APEX_TOKEN')))
     if www2.status_code==200:
-        parsed_json=(json.dumps(www2.json()))
-        a=(json.loads(parsed_json)["global"]["rank"])
+        while True:
+            try:
+                parsed_json=(json.dumps(www2.json()))
+                a=(json.loads(parsed_json)["global"]["rank"])
+            except KeyError:
+                www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=os.getenv('APEX_TOKEN')))
+                time.sleep(5)
+                continue
+            break
         return a['rankName'], a['rankScore']
     else:
         print('ERROR',www2.status_code)
@@ -46,9 +60,16 @@ def map_rotation_data():
         time.sleep(5)
         www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
     if www2.status_code==200:
-        parsed_json=(json.dumps(www2.json()))
-        a=(json.loads(parsed_json)["current"])
-        b=(json.loads(parsed_json)["next"])
+        while True:
+            try:
+                parsed_json=(json.dumps(www2.json()))
+                a=(json.loads(parsed_json)["current"])
+                b=(json.loads(parsed_json)["next"])
+            except KeyError:
+                www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+                time.sleep(5)
+                continue
+            break
         return a['map'],a['remainingTimer'],b['map'],b['readableDate_start'],b['readableDate_end']
     else:
         print('ERROR',www2.status_code)
