@@ -81,7 +81,7 @@ def check_stream_status(streamer_name):
   
   if len(stream_data['data']) == 1:
     #print(streamer_name + ' is live: ' + stream_data['data'][0]['title'] + ' playing ' + stream_data['data'][0]['game_name']);
-    return True, stream_data["data"][0]['viewer_count']
+    return True, stream_data["data"][0]['viewer_count'], stream_data["data"][0]['game_name']
   else:
     return False
     #print(streamer_name + ' is not live');

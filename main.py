@@ -1,3 +1,4 @@
+from sre_parse import CATEGORIES
 import functions
 import dc_functions
 import discord
@@ -33,16 +34,16 @@ async def on_command_error(ctx, error):
 
 @bot.command()
 @commands.has_any_role(683637694903222382, 862315076346052628)
-async def register_ttv(ctx, streamer):
-    if functions.check_streamer_existence(streamer)==True:
-        if twitch_db.search(user.streamer_name == streamer)==[]:
-            twitch_db.insert({'streamer_name': streamer})
-            await ctx.send("Zarejestrowano streamera.")
+async def register_ttv(ctx, *args):
+    for streamer in args:
+        if functions.check_streamer_existence(streamer)==True:
+            if twitch_db.search(user.streamer_name == streamer)==[]:
+                twitch_db.insert({'streamer_name': streamer.lower()})
+            else:
+                await ctx.send(f"Streamer {streamer} już istnieje w bazie danych.")
         else:
-            await ctx.send("Streamer już istnieje.")
-
-    else:
-        await ctx.send(f"Streamer {streamer} nie istnieje.")
+            await ctx.send(f"Streamer {streamer} nie istnieje.")
+    await ctx.send("Zarejestrowano pomyślnie.")
 
 @bot.command()
 @commands.has_any_role(683637694903222382, 862315076346052628)
@@ -79,27 +80,40 @@ async def del_category(ctx, category: discord.CategoryChannel):
 @commands.has_any_role(683637694903222382, 862315076346052628)
 async def update_ttv_category():
     while True:
-        category= bot.get_channel(993829164392132668)
-        delcategory = category
-        channels = delcategory.channels # Get all channels of the category
-        for channel in channels: # We search for all channels in a loop
-            try:
-                await channel.delete() # Delete all channels
-            except AttributeError: # If the category does not exist/channels are gone
-                pass
+        categories={"Apex Legends":993829164392132668, "Just Chatting":994278145509310485, "Phasmophobia":994279106210439238, "VALORANT":994279798484516905, "League of Legends":994280414686498937}
+        cut_nicknames={"tsm_imperialhal":"imperial", "sweetdreams":"sweet", "diegosaurs":"diego", "Alliance_Hakis":"hakis", "EnemyAPEX":"enemy", "YoungMulti":"Multi", "Pago3":"pago", "IzakOOO":"izak", "parisplatynov":"parisplat", "mrs_nocka":"nocka", "btyr3kt":"r3kt"}
+        streamers= dc_functions.create_streamers_list()
+        guild = bot.get_guild(610920227085221898) # <-- insert yor guild id here
         
-        try:
-            guild = bot.get_guild(610920227085221898) # <-- insert yor guild id here
-            streamers= dc_functions.create_streamers_list()
-            streamers=sorted(streamers.items(), key=lambda x: x[1], reverse=True)
-            cut_nicknames={"tsm_imperialhal":"imperial", "sweetdreams":"sweet", "diegosaurs":"diego" }
-            for streamer in streamers:
-                if streamer[0] in cut_nicknames:
-                    await guild.create_voice_channel(f"🟢  {cut_nicknames[streamer[0]].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category, reason=None)
+        for category in categories:
+            streamers_by_category={}
+            for streamer in list(streamers): # <-- Updating streamers_by_category with viewers count
+                if streamers[streamer][1]==category:                                              
+                    streamers_by_category.update({streamer:streamers[streamer][0]})               
+                    del streamers[streamer]
+                elif streamers[streamer][1] not in categories and category=="Just Chatting":
+                    streamers_by_category.update({streamer:streamers[streamer][0]})
+                    del streamers[streamer]
                 else:
-                    await guild.create_voice_channel(f"🟢  {streamer[0].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category, reason=None)
-        except Exception as errors:
-            print(f"Bot Error: {errors}")
+                    continue
+            streamers_by_category=sorted(streamers_by_category.items(), key=lambda x: x[1], reverse=True)
+            category_id= bot.get_channel(categories[category])
+            channels = category_id.channels # Get all channels of the category
+            for channel in channels: # We search for all channels in a loop
+                try:
+                    await channel.delete() # Delete all channels
+                except AttributeError: # If the category does not exist/channels are gone
+                    pass
+                
+            
+            for streamer in streamers_by_category:
+                try:
+                    if streamer[0] in cut_nicknames:
+                        await guild.create_voice_channel(f"🟢  {cut_nicknames[streamer[0]].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category_id, reason=None)
+                    else:
+                        await guild.create_voice_channel(f"🟢  {streamer[0].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category_id, reason=None)
+                except Exception as errors:
+                    print(f"Bot Error: {errors}")
         await asyncio.sleep(510)
 
 ###################################################################APEX LEGENDS###################################################################
@@ -198,9 +212,9 @@ async def update_leaderboard(channel_id, message_IDs: dict):
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
-    asyncio.create_task(update_pred(971385355062370334,971385734701387816))
-    asyncio.create_task(update_map_rotation(973284454376296538,973284663885967431))
-    asyncio.create_task(update_leaderboard(971385355062370334,IDs_leaderboard))
+    # asyncio.create_task(update_pred(971385355062370334,971385734701387816))
+    # asyncio.create_task(update_map_rotation(973284454376296538,973284663885967431))
+    # asyncio.create_task(update_leaderboard(971385355062370334,IDs_leaderboard))
     asyncio.create_task(update_ttv_category())
 
 

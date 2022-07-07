@@ -34,7 +34,7 @@ def create_streamers_list():
                 if streamer[0]=='streamer_name':
                     status=functions.check_stream_status(streamer[1])
                     if status!=False:
-                        streamers.update({streamer[1]: status[1]})
+                        streamers.update({streamer[1]: [status[1],status[2]]})
                     else:
                         continue
     return streamers
