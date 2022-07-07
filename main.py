@@ -1,4 +1,3 @@
-from sre_parse import CATEGORIES
 import functions
 import dc_functions
 import discord
@@ -212,9 +211,9 @@ async def update_leaderboard(channel_id, message_IDs: dict):
 @bot.event
 async def on_ready():
     print('We have logged in as {0.user}'.format(bot))
-    # asyncio.create_task(update_pred(971385355062370334,971385734701387816))
-    # asyncio.create_task(update_map_rotation(973284454376296538,973284663885967431))
-    # asyncio.create_task(update_leaderboard(971385355062370334,IDs_leaderboard))
+    asyncio.create_task(update_pred(971385355062370334,971385734701387816))
+    asyncio.create_task(update_map_rotation(973284454376296538,973284663885967431))
+    asyncio.create_task(update_leaderboard(971385355062370334,IDs_leaderboard))
     asyncio.create_task(update_ttv_category())
 
 
