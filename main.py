@@ -9,8 +9,8 @@ import datetime
 import asyncio
 from tinydb import TinyDB, Query
 
-db = TinyDB('db.json')
-twitch_db = TinyDB('twitch_db.json')
+db = TinyDB('db/db.json')
+twitch_db = TinyDB('db/twitch_db.json')
 user = Query()
 
 
