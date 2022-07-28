@@ -49,7 +49,7 @@ def get_rankScore(platform,player):
                 time.sleep(5)
                 continue
             break
-        return a['rankName'], a['rankScore']
+        return a['rankName'], a['rankScore'], a['rankDiv']
     else:
         print('ERROR',www2.status_code)
 

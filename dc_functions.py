@@ -2,6 +2,7 @@ import discord
 import datetime
 import functions
 from tinydb import TinyDB, Query
+from tqdm import tqdm
 
 db = TinyDB('db/db.json')
 twitch_db = TinyDB('db/twitch_db.json')
@@ -68,3 +69,28 @@ def embed_help():
     embed.add_field(name="Zarejestrowanie do leaderboard'a", value='`>register {platforma(PC,PS4,X1)} {nick origin}`', inline=False)
     embed.add_field(name="Wyrejestrowanie", value='`>unregister`', inline=False)
     return embed
+
+
+def rank_progress_bar(RP,rank, rank_division):
+    if rank=='Master':
+        pred_rp=functions.pred_threshold()[0]
+        return tqdm.format_meter(RP-15000,pred_rp-15000,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=pred_rp )
+    ranks = {
+        'Diamond': [11400, 12300, 13200, 14100],
+        'Platinum': [8200, 9000, 9800, 10600],
+        'Gold': [5400, 6100, 6800, 7500],
+        'Silver': [3000, 3600, 4200, 4800],
+        'Bronze': [1000, 1500, 2000, 2500]
+    }
+    rank_divisions={
+        4:0,
+        3:1,
+        2:2,
+        1:3,
+        }
+    total_rank_rp = ranks[rank][1]-ranks[rank][0]
+    for n in rank_divisions:
+        if n==rank_division:
+            rank_number=rank_divisions[n]
+    return tqdm.format_meter(RP-ranks[rank][rank_number],total_rank_rp,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=ranks[rank][rank_number]+total_rank_rp)
+
