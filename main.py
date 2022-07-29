@@ -26,8 +26,6 @@ async def on_command_error(ctx, error):
     raise error
 
 
-from discord.ext import tasks, commands
-
 
 ##############################################################TWITCH########################################################################
 
@@ -78,8 +76,13 @@ async def del_category(ctx, category: discord.CategoryChannel):
 
 @tasks.loop(minutes=8)
 async def update_ttv_category():
-    categories = {"Apex Legends": 993829164392132668, "Just Chatting": 994278145509310485,
-                  "Phasmophobia": 994279106210439238, "VALORANT": 994279798484516905, "League of Legends": 994280414686498937}
+    categories = {
+                  "Apex Legends": [993829164392132668,1002583106252972032, 'https://static-cdn.jtvnw.net/ttv-boxart/511224-285x380.jpg', discord.Color.dark_red()],
+                  "Just Chatting": [994278145509310485, 1002583145553596416,'https://static-cdn.jtvnw.net/ttv-boxart/509658-285x380.jpg', discord.Color.from_rgb(201, 199, 191)],
+                  "Phasmophobia": [994279106210439238, 1002583186188025857, 'https://static-cdn.jtvnw.net/ttv-boxart/518184_IGDB-285x380.jpg', discord.Color.from_rgb(36, 35, 34)],
+                  "VALORANT": [994279798484516905, 1002583252441247924, 'https://static-cdn.jtvnw.net/ttv-boxart/516575-285x380.jpg', discord.Color.from_rgb(252, 40, 51)],
+                  "League of Legends": [994280414686498937, 1002583268518010991, 'https://static-cdn.jtvnw.net/ttv-boxart/21779-285x380.jpg', discord.Color.from_rgb(1, 110, 32)],
+                  }
     cut_nicknames = {"tsm_imperialhal": "imperial", "sweetdreams": "sweet", "diegosaurs": "diego", "Alliance_Hakis": "hakis", "EnemyAPEX": "enemy",
                      "YoungMulti": "Multi", "Pago3": "pago", "IzakOOO": "izak", "parisplatynov": "parisplat", "mrs_nocka": "nocka", "btyr3kt": "r3kt"}
     streamers = dc_functions.create_streamers_list()
@@ -101,23 +104,34 @@ async def update_ttv_category():
                 continue
         streamers_by_category = sorted(
             streamers_by_category.items(), key=lambda x: x[1], reverse=True)
-        category_id = bot.get_channel(categories[category])
+        category_id = bot.get_channel(categories[category][0])
         channels = category_id.channels  # Get all channels of the category
         for channel in channels:  # We search for all channels in a loop
             try:
                 await channel.delete()  # Delete all channels
             except AttributeError:  # If the category does not exist/channels are gone
                 pass
-
+        
+        channel = bot.get_channel(1002582923121274890)
+        message = await channel.fetch_message(categories[category][1])
+        embed = discord.Embed(title=f"__**{category}**__", timestamp= datetime.datetime.utcnow(), color=categories[category][3])
+        embed.set_thumbnail(url=f'{categories[category][2]}')
+        
+        pos=1
         for streamer in streamers_by_category:
             try:
                 if streamer[0] in cut_nicknames:
                     await guild.create_voice_channel(f"🟢  {cut_nicknames[streamer[0]].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category_id, reason=None)
+                    embed.add_field(name=f'{pos}. 🟢 {cut_nicknames[streamer[0]].capitalize()} \n👤: ≈ {streamer[1]}', value=f'https://www.twitch.tv/{streamer[0].casefold()}', inline=False)
+                    pos+=1
                 else:
                     await guild.create_voice_channel(f"🟢  {streamer[0].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category_id, reason=None)
+                    embed.add_field(name=f'{pos}. 🟢 {streamer[0].capitalize()} \n👤: ≈ {streamer[1]}', value=f'https://www.twitch.tv/{streamer[0].casefold()}', inline=False)
+                    pos+=1
             except Exception as errors:
                 print(f"Bot Error: {errors}")
-                
+        await message.edit(embed=embed,content='')
+
 
 ###################################################################APEX LEGENDS###################################################################
 

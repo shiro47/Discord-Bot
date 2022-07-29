@@ -99,7 +99,7 @@ def check_stream_status(streamer_name):
         time.sleep(5)
         stream = requests.get('https://api.twitch.tv/helix/streams?user_login=' + streamer_name, headers=headers)
   stream_data = stream.json();
-  
+
   if len(stream_data['data']) == 1:
     #print(streamer_name + ' is live: ' + stream_data['data'][0]['title'] + ' playing ' + stream_data['data'][0]['game_name']);
     return True, stream_data["data"][0]['viewer_count'], stream_data["data"][0]['game_name']
@@ -137,3 +137,4 @@ def check_streamer_existence(streamer_name):
         return False
     else:
         return True
+    
