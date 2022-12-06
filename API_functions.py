@@ -2,9 +2,8 @@ import time
 import json
 import requests
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+from decouple import config
 
 def jprint(obj):        # create a formatted string of the Python JSON object
     text = json.dumps(obj, sort_keys=True, indent=4)
@@ -13,11 +12,11 @@ def jprint(obj):        # create a formatted string of the Python JSON object
 ##########################################APEX LEGENDS#################################################
 
 def pred_threshold():
-    www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+    www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=config('APEX_TOKEN')))
     while www2.status_code!=200:
         print(f'Fixing error {www2.status_code}...')
         time.sleep(5)
-        www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+        www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=config('APEX_TOKEN')))
     if www2.status_code==200:
         while True:
             try:
@@ -25,7 +24,7 @@ def pred_threshold():
                 a=(json.loads(parsed_json)["RP"]["PC"])
                 b=(json.loads(parsed_json)["AP"]["PC"])
             except KeyError:
-                www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+                www2=requests.get('https://api.mozambiquehe.re/predator?auth={token}'.format(token=config('APEX_TOKEN')))
                 time.sleep(5)
                 continue
             break
@@ -34,18 +33,18 @@ def pred_threshold():
         print('ERROR',www2.status_code)
 
 def get_rankScore(platform,player):
-    www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=os.getenv('APEX_TOKEN')))
+    www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=config('APEX_TOKEN')))
     while www2.status_code!=200:
         print(f'Fixing error {www2.status_code}...')
         time.sleep(5)
-        www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=os.getenv('APEX_TOKEN')))
+        www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=config('APEX_TOKEN')))
     if www2.status_code==200:
         while True:
             try:
                 parsed_json=(json.dumps(www2.json()))
                 a=(json.loads(parsed_json)["global"]["rank"])
             except KeyError:
-                www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=os.getenv('APEX_TOKEN')))
+                www2=requests.get('https://api.mozambiquehe.re/bridge?auth={token}&player={player}&platform={platform}'.format(platform=platform, player=player, token=config('APEX_TOKEN')))
                 time.sleep(5)
                 continue
             break
@@ -54,11 +53,11 @@ def get_rankScore(platform,player):
         print('ERROR',www2.status_code)
 
 def map_rotation_data():
-    www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+    www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=config('APEX_TOKEN')))
     while www2.status_code!=200:
         print(f'Fixing error {www2.status_code}...')
         time.sleep(5)
-        www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+        www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=config('APEX_TOKEN')))
     if www2.status_code==200:
         while True:
             try:
@@ -66,7 +65,7 @@ def map_rotation_data():
                 a=(json.loads(parsed_json)["current"])
                 b=(json.loads(parsed_json)["next"])
             except KeyError:
-                www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=os.getenv('APEX_TOKEN')))
+                www2=requests.get('https://api.mozambiquehe.re/maprotation?auth={token}'.format(token=config('APEX_TOKEN')))
                 time.sleep(5)
                 continue
             break
@@ -77,8 +76,8 @@ def map_rotation_data():
 #################################################TWITCH###########################################################
 
 def check_stream_status(streamer_name):
-  client_id = os.getenv('TWITCH_CLIENT_ID')
-  client_secret = os.getenv('TWITCH_CLIENT_SECRET')
+  client_id = config('TWITCH_CLIENT_ID')
+  client_secret = config('TWITCH_CLIENT_SECRET')
   body = {
       'client_id': client_id,
       'client_secret': client_secret,
@@ -108,8 +107,8 @@ def check_stream_status(streamer_name):
     #print(streamer_name + ' is not live');
 
 def check_streamer_existence(streamer_name):
-    client_id = os.getenv('TWITCH_CLIENT_ID')
-    client_secret = os.getenv('TWITCH_CLIENT_SECRET')
+    client_id = config('TWITCH_CLIENT_ID')
+    client_secret = config('TWITCH_CLIENT_SECRET')
 
     body = {
       'client_id': client_id,

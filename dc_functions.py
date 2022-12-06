@@ -1,6 +1,6 @@
 import discord 
 import datetime
-import functions
+import API_functions
 from tinydb import TinyDB, Query
 from tqdm import tqdm
 
@@ -9,7 +9,7 @@ twitch_db = TinyDB('db/twitch_db.json')
 user = Query()
 
 def embed_pred():
-    values=functions.pred_threshold()
+    values=API_functions.pred_threshold()
     embed = discord.Embed(title='BR Predator Threshold: '+str(values[0])+' RP\n`Total Masters and Preds:` '+str(values[1])+' \n\nArena Predator Threshold: '+str(values[2])+' RP\n`Total Masters and Preds:` '+str(values[3]), color=discord.Color.dark_red(),timestamp= datetime.datetime.utcnow())
     embed.set_thumbnail(url="https://cdn.apexstats.dev/ProjectRanked/Badges/Predator.png")
     return embed
@@ -25,7 +25,7 @@ def creating_rank_dict():
                 if t[0]=='ID':
                     player=t[1]
             if platform1!=None and player!=None:
-                players.update({player:functions.get_rankScore(platform1,player)})                   
+                players.update({player:API_functions.get_rankScore(platform1,player)})                   
     return players
 
 def create_streamers_list():
@@ -33,7 +33,7 @@ def create_streamers_list():
     for x in iter(twitch_db):
             for streamer in x.items():
                 if streamer[0]=='streamer_name':
-                    status=functions.check_stream_status(streamer[1])
+                    status=API_functions.check_stream_status(streamer[1])
                     if status!=False:
                         streamers.update({streamer[1]: [status[1],status[2]]})
                     else:
@@ -48,7 +48,7 @@ def get_discordID(gameID):
                 return y[1]
 
 def embed_map_rotation():
-    values=functions.map_rotation_data()
+    values=API_functions.map_rotation_data()
     embed = discord.Embed(title=f'Aktualna mapa to: `{values[0]}`', timestamp= datetime.datetime.utcnow())
     if len(values[0].split())>1:
         word=values[0].split()
@@ -73,7 +73,7 @@ def embed_help():
 
 def rank_progress_bar(RP,rank, rank_division):
     if rank=='Master':
-        pred_rp=functions.pred_threshold()[0]
+        pred_rp=API_functions.pred_threshold()[0]
         return tqdm.format_meter(RP-15000,pred_rp-15000,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=pred_rp )
     ranks = {
         'Diamond': [11400, 12300, 13200, 14100],
