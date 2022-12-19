@@ -2,7 +2,6 @@ import time
 import json
 import requests
 import os
-
 from decouple import config
 
 def jprint(obj):        # create a formatted string of the Python JSON object

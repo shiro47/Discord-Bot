@@ -1,62 +1,71 @@
-import API_functions
-import dc_functions
 import discord
 from discord.ext import commands, tasks
 from discord.ext.commands import CommandNotFound
+from discord import app_commands
+import API_functions
+import dc_functions
+from mongo_database import twitch_db as twitch_database
+from mongo_database import apex_db as apex_database
 import datetime
-from tinydb import TinyDB, Query
-import pymongo
 from decouple import config
 import time
 
 
-db = TinyDB('db/db.json')
-twitch_db = TinyDB('db/twitch_db.json')
-user = Query()
-client = pymongo.MongoClient(f"mongodb+srv://shiro_47:{config('MONGODB_PASSWORD')}@gs-discord.y06kt.mongodb.net/?retryWrites=true&w=majority")
-db = client["GS_Database"]
+twitch_db=twitch_database()
+apex_db=apex_database()
 
 
-bot = commands.Bot(command_prefix=">", help_command=None)
-
+intents = discord.Intents(messages=True, guilds=True)
+bot = discord.Client(intents=intents)
+tree = app_commands.CommandTree(bot)
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, CommandNotFound):
         return
     raise error
-
-
-
+    
+@tree.command(name='sync', description='Owner only')
+async def sync(interaction: discord.Interaction):
+    if interaction.user.id ==332532502990159873:
+        await tree.sync()
+        print('Command tree synced.')
+    else:
+        await interaction.response.send_message('You must be the owner to use this command!')
 ##############################################################TWITCH########################################################################
 
 class Twitch_module():
-
-    @bot.command()
+    
+    @tree.command()
     @commands.has_any_role(683637694903222382, 862315076346052628)
     async def register_ttv(ctx, *args):
         for streamer in args:
             if API_functions.check_streamer_existence(streamer)==True:
-                if twitch_db.search(user.streamer_name == streamer)==[]:
-                    twitch_db.insert({'streamer_name': streamer.lower()})
+                if twitch_db.check_existance(streamer)==False:
+                    twitch_db.add_streamer(streamer)
                 else:
                     await ctx.send(f"Streamer {streamer} już istnieje w bazie danych.")
             else:
                 await ctx.send(f"Streamer {streamer} nie istnieje.")
         await ctx.send("Zarejestrowano pomyślnie.")
 
-    @bot.command()
+    @tree.command()
     @commands.has_any_role(683637694903222382, 862315076346052628)
     async def unregister_ttv(ctx, streamer):
-        if twitch_db.search(user.streamer_name == streamer)==[]:
+        if twitch_db.check_existance(streamer)==False:
             await ctx.send(f"Streamer {streamer} nie jest zarejestrowany.")
         else: 
-            twitch_db.remove(user.streamer_name==streamer)
+            twitch_db.remove_streamer(streamer)
             await ctx.send("Wyrejestrowano streamera.")
-
-    @bot.command()
+            
+    @tree.command()
     @commands.has_any_role(683637694903222382, 862315076346052628)
-    async def setup_ttv_category(ctx):
+    async def registered_streamers(self, ctx):
+        await ctx.send(embed = dc_functions.embed_all_streamers())
+    
+    @tree.command()
+    @commands.has_any_role(683637694903222382, 862315076346052628)
+    async def setup_ttv_category(self, ctx):
         try:
             await ctx.send("Setting up management!")
             await ctx.guild.create_category( "🎥 ONLINE STREAMERS 🎥", overwrites=None, reason=None)
@@ -64,7 +73,7 @@ class Twitch_module():
         except Exception as errors:
             print(f"Bot Error: {errors}")
 
-    @bot.command(pass_context=True)
+    @tree.command()
     @commands.has_any_role(683637694903222382, 862315076346052628)
     async def del_category(ctx, category: discord.CategoryChannel):
         delcategory = category # delcategory is our ID (category)
@@ -140,11 +149,12 @@ class Twitch_module():
 
 class ApexLegends_module():
 
-    @bot.command()
-    async def help(ctx):
-        await ctx.send(embed= dc_functions.embed_help())
+    @tree.command(name = "help", description = "How to register to leaderboard",)
+    async def help(self, interaction):
+        await interaction.response.send_message("Hello!")
+        #send(embed= dc_functions.embed_help())
 
-    @bot.command()
+    @tree.command()
     async def register(ctx, *args):
         platforms=('PC','PS4','X1')
         platform=None
@@ -152,12 +162,12 @@ class ApexLegends_module():
         if ctx.author==bot.user:
             return
         if len(args)==2:
-            if db.search(user.DiscordID == str(ctx.author.id))==[]:                    
+            if apex_db.check_existance(str(ctx.author.id))==False:                    
                 if args[0] in platforms:
                     platform=args[0]
                     nickname=args[1]
                     if API_functions.get_rankScore(platform,nickname)!=None:
-                        db.insert({'platform': platform, 'ID': nickname, 'DiscordID': str(ctx.author.id)})
+                        apex_db.add_player(platform, nickname, str(ctx.author.id))
                         await ctx.send('Zarejestrowano.')
                     else:
                         await ctx.send('Źle wprowadzony nick.')
@@ -168,12 +178,14 @@ class ApexLegends_module():
         else:
             await ctx.send('Prawidłowy zapis: `>register {platforma(PC,PS4,X1)} {nick origin}`')
 
-    @bot.command()
+    @tree.command()
     async def unregister(ctx, *args):
         if ctx.author==bot.user:
             return    
-        db.remove(user.DiscordID==str(ctx.author.id))
-        await ctx.send('Wyrejestrowano.')        
+        if apex_db.remove_player(str(ctx.author.id)):
+            await ctx.send('Wyrejestrowano.')
+            return        
+        await ctx.send('Nie jesteś zarejestrowany.')
 
 
     @tasks.loop(hours=1)
@@ -226,27 +238,28 @@ class ApexLegends_module():
             for y in players:
                 if y[1][0]==x:
                     player=y[0]
+                    user= await bot.fetch_user(player)
+                    player=apex_db.get_player(player)["ID"]
                     RP=y[1][1]
-                    user = await bot.fetch_user(dc_functions.get_discordID(player))
                     if x=='Apex Predator':
-                        embed.add_field(name=str(pos)+f'**. {user}**', value=player+' | RP '+str(RP), inline=False)
+                        embed.add_field(name=str(pos)+f'**. {user.name}**', value=player+' | RP '+str(RP), inline=False)
                     else:
-                        embed.add_field(name=str(pos)+f'**. {user}**', value='```'+player+' | '+f'{x} {y[1][2]}'+'\n'+dc_functions.rank_progress_bar(RP,x,y[1][2])+'```', inline=False)
+                        embed.add_field(name=str(pos)+f'**. {user.name}**', value='```'+player+' | '+f'{x} {y[1][2]}'+'\n'+dc_functions.rank_progress_bar(RP,x,y[1][2])+'```', inline=False)
                     pos+=1
             var+=1
             await message.edit(embed=embed,content='')
+            time.sleep(3)
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),'| Leaderboard updated.')
     
 
 @bot.event
 async def on_ready():
-    IDs_leaderboard=[972863566669574185,972863568326303804,972863574701670500,972863576270340177,1046402109374992494,1046402151519367178,1046402171970785310]
+    IDs_leaderboard=[1054045651882737775,1054045666416013462,1054045682564083823,1054045744568487946,1054045761882575000,1054045774704541727,1054045853448413196]
     print('We have logged in as {0.user}'.format(bot))
-    apex.update_pred.start(971385355062370334,971385734701387816)
-    apex.update_map_rotation.start(973284454376296538,973284663885967431)
-    apex.update_leaderboard.start(971385355062370334,IDs_leaderboard)
-    twitch.update_ttv_category.start()
-
+    # apex.update_pred.start(971385355062370334,971385734701387816)
+    # apex.update_map_rotation.start(973284454376296538,973284663885967431)
+    # apex.update_leaderboard.start(971385355062370334,IDs_leaderboard)
+    # twitch.update_ttv_category.start()
 if __name__ == "__main__":
     twitch=Twitch_module()
     apex = ApexLegends_module()

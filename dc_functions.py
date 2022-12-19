@@ -1,51 +1,33 @@
 import discord 
 import datetime
 import API_functions
-from tinydb import TinyDB, Query
+from mongo_database import twitch_db as twitch_database
+from mongo_database import apex_db as apex_database
 from tqdm import tqdm
 
-db = TinyDB('db/db.json')
-twitch_db = TinyDB('db/twitch_db.json')
-user = Query()
+twitch_db = twitch_database()
+apex_db = apex_database()
+
+
+def embed_help():
+    embed= discord.Embed(title='Dostępne komendy ', timestamp= datetime.datetime.utcnow(), color=discord.Color.purple())
+    embed.add_field(name="Zarejestrowanie do leaderboard'a", value='`>register {platforma(PC,PS4,X1)} {nick origin}`', inline=False)
+    embed.add_field(name="Wyrejestrowanie", value='`>unregister`', inline=False)
+    return embed
 
 def embed_pred():
     values=API_functions.pred_threshold()
     embed = discord.Embed(title='BR Predator Threshold: '+str(values[0])+' RP\n`Total Masters and Preds:` '+str(values[1])+' \n\nArena Predator Threshold: '+str(values[2])+' RP\n`Total Masters and Preds:` '+str(values[3]), color=discord.Color.dark_red(),timestamp= datetime.datetime.utcnow())
-    embed.set_thumbnail(url="https://cdn.apexstats.dev/ProjectRanked/Badges/Predator.png")
+    embed.set_thumbnail(url="https://api.mozambiquehe.re/assets/ranks/apexpredator1.png")
     return embed
 
 def creating_rank_dict():
-    platform1=None
-    player=None
     players={}
-    for y in iter(db):
-            for t in y.items():
-                if t[0]=='platform':
-                    platform1=t[1]
-                if t[0]=='ID':
-                    player=t[1]
-            if platform1!=None and player!=None:
-                players.update({player:API_functions.get_rankScore(platform1,player)})                   
+    for player in apex_db.get_all_players():
+        playerID=player['DiscordID']
+        platform1=player['platform']
+        players.update({playerID:API_functions.get_rankScore(platform1,player['ID'])})                   
     return players
-
-def create_streamers_list():
-    streamers={}
-    for x in iter(twitch_db):
-            for streamer in x.items():
-                if streamer[0]=='streamer_name':
-                    status=API_functions.check_stream_status(streamer[1])
-                    if status!=False:
-                        streamers.update({streamer[1]: [status[1],status[2]]})
-                    else:
-                        continue
-    return streamers
-
-
-def get_discordID(gameID):
-    for x in db.search(user.ID == gameID):
-        for y in x.items():
-            if y[0]=='DiscordID':
-                return y[1]
 
 def embed_map_rotation():
     values=API_functions.map_rotation_data()
@@ -64,11 +46,6 @@ def embed_map_rotation():
     embed.add_field(name='Koniec: ', value=f'`{time.strftime("%H:%M:%S")}`')
     return embed
 
-def embed_help():
-    embed= discord.Embed(title='Dostępne komendy ', timestamp= datetime.datetime.utcnow(), color=discord.Color.purple())
-    embed.add_field(name="Zarejestrowanie do leaderboard'a", value='`>register {platforma(PC,PS4,X1)} {nick origin}`', inline=False)
-    embed.add_field(name="Wyrejestrowanie", value='`>unregister`', inline=False)
-    return embed
 
 
 def rank_progress_bar(RP,rank, rank_division):
@@ -94,3 +71,26 @@ def rank_progress_bar(RP,rank, rank_division):
             rank_number=rank_divisions[n]
     return tqdm.format_meter(RP-ranks[rank][rank_number],total_rank_rp,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=ranks[rank][rank_number]+total_rank_rp)
 
+
+def create_streamers_list():
+    streamers={}
+    for x in twitch_db.get_all_streamers():
+            for streamer in x.items():
+                if streamer[0]=='streamer_name':
+                    status=API_functions.check_stream_status(streamer[1])
+                    if status!=False:
+                        streamers.update({streamer[1]: [status[1],status[2]]})
+                    else:
+                        continue
+    return streamers
+
+def embed_all_streamers():
+    embed = discord.Embed(title="Registered streamers in database:" ,color=discord.Color.dark_purple(),timestamp= datetime.datetime.utcnow())
+    text="```"
+    pos=1
+    for streamer in twitch_db.get_all_streamers():
+        text+=f"{str(pos)}. {streamer['streamer_name']}\n"
+        pos+=1
+    text+="```"
+    embed.add_field(name="\u200b", value=text)
+    return embed
