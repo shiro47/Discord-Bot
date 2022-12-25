@@ -48,7 +48,7 @@ class apex_db():
         return False
     
     def remove_player(self, discordID):
-        if self.check_existance(discordID)==False:
+        if self.check_existance(discordID)==True:
             self.collection.delete_one({"DiscordID": discordID})
             return True
         return False
@@ -60,7 +60,6 @@ class apex_db():
         if self.check_existance(discordID)==True:
             return self.collection.find_one({"DiscordID":discordID})
         return False
-    
     
     
     

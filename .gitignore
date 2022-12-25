@@ -6,3 +6,7 @@ __pycache__/dc_functions.cpython-39.pyc
 __pycache__/functions.cpython-39.pyc
 __pycache__/API_functions.cpython-39.pyc
 __pycache__/mongo_database.cpython-39.pyc
+cogs/Apex/__pycache__/embeds.cpython-39.pyc
+cogs/Apex/__pycache__/leaderboard.cpython-39.pyc
+cogs/Twitch/__pycache__/streamers_live_list.cpython-39.pyc
+cogs/__pycache__/exception_handler.cpython-39.pyc

@@ -94,3 +94,8 @@ def embed_all_streamers():
     text+="```"
     embed.add_field(name="\u200b", value=text)
     return embed
+
+def is_owner(interaction: discord.Interaction):
+    if interaction.user.id == 33253250299015987:
+        return True
+    return False
