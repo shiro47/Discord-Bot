@@ -1,36 +1,54 @@
 import discord 
 import datetime
-import API_functions
+from APIs.apex_api import Apex_API
+from APIs.twitch_api import Twitch_API
 from mongo_database import twitch_db as twitch_database
 from mongo_database import apex_db as apex_database
 from tqdm import tqdm
+import json
+import typing
+import functools
+import asyncio
 
 twitch_db = twitch_database()
 apex_db = apex_database()
+twitch_api = Twitch_API()
+apex_api = Apex_API()
 
+def jprint(obj):        # create a formatted string of the Python JSON object
+    text = json.dumps(obj, sort_keys=True, indent=4)
+    print(text)
+
+
+def to_thread(func: typing.Callable) -> typing.Coroutine:
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await asyncio.to_thread(func, *args, **kwargs)
+    return wrapper
 
 def embed_help():
     embed= discord.Embed(title='Dostępne komendy ', timestamp= datetime.datetime.utcnow(), color=discord.Color.purple())
-    embed.add_field(name="Zarejestrowanie do leaderboard'a", value='`>register {platforma(PC,PS4,X1)} {nick origin}`', inline=False)
-    embed.add_field(name="Wyrejestrowanie", value='`>unregister`', inline=False)
+    embed.add_field(name="Zarejestrowanie do leaderboard'a", value='`/register {platforma(PC,PS4,X1)} {nick origin}`', inline=False)
+    embed.add_field(name="Wyrejestrowanie", value='`/unregister`', inline=False)
     return embed
 
 def embed_pred():
-    values=API_functions.pred_threshold()
+    values=apex_api.pred_threshold()
     embed = discord.Embed(title='BR Predator Threshold: '+str(values[0])+' RP\n`Total Masters and Preds:` '+str(values[1])+' \n\nArena Predator Threshold: '+str(values[2])+' RP\n`Total Masters and Preds:` '+str(values[3]), color=discord.Color.dark_red(),timestamp= datetime.datetime.utcnow())
     embed.set_thumbnail(url="https://api.mozambiquehe.re/assets/ranks/apexpredator1.png")
     return embed
 
+@to_thread
 def creating_rank_dict():
     players={}
     for player in apex_db.get_all_players():
         playerID=player['DiscordID']
         platform1=player['platform']
-        players.update({playerID:API_functions.get_rankScore(platform1,player['ID'])})                   
+        players.update({playerID:apex_api.get_rankScore(platform1,player['ID'])})                   
     return players
 
 def embed_map_rotation():
-    values=API_functions.map_rotation_data()
+    values=apex_api.map_rotation_data()
     embed = discord.Embed(title=f'Aktualna mapa to: `{values[0]}`', timestamp= datetime.datetime.utcnow())
     if len(values[0].split())>1:
         word=values[0].split()
@@ -50,7 +68,7 @@ def embed_map_rotation():
 
 def rank_progress_bar(RP,rank, rank_division):
     if rank=='Master':
-        pred_rp=API_functions.pred_threshold()[0]
+        pred_rp=apex_api.pred_threshold()[0]
         return tqdm.format_meter(RP-15000,pred_rp-15000,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=pred_rp )
     ranks = {
         'Diamond': [11400, 12300, 13200, 14100],
@@ -71,13 +89,13 @@ def rank_progress_bar(RP,rank, rank_division):
             rank_number=rank_divisions[n]
     return tqdm.format_meter(RP-ranks[rank][rank_number],total_rank_rp,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=ranks[rank][rank_number]+total_rank_rp)
 
-
+@to_thread
 def create_streamers_list():
     streamers={}
     for x in twitch_db.get_all_streamers():
             for streamer in x.items():
                 if streamer[0]=='streamer_name':
-                    status=API_functions.check_stream_status(streamer[1])
+                    status=twitch_api.check_stream_status(streamer[1])
                     if status!=False:
                         streamers.update({streamer[1]: [status[1],status[2]]})
                     else:
@@ -99,3 +117,4 @@ def is_owner(interaction: discord.Interaction):
     if interaction.user.id == 33253250299015987:
         return True
     return False
+

@@ -3,8 +3,8 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands, tasks
 import datetime
-import dc_functions
-import API_functions
+import utilities
+from APIs.twitch_api import Twitch_API
 import mongo_database
 
 
@@ -15,13 +15,14 @@ class Twitch_live_list(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.twitch_db = mongo_database.twitch_db()
+        self.update_ttv_category.start()
         
-    @app_commands.checks.has_any_role(683637694903222382)
+    @app_commands.checks.has_any_role(683637694903222382, 862315076346052628)
     @app_commands.describe(streamer= "Streamer nickname")
     @app_commands.command(name = "register_ttv", description = "Register twitch streamer to database.")
     async def register_ttv(self, interaction: discord.Interaction, streamer: str):
         await interaction.response.defer()
-        if API_functions.check_streamer_existence(streamer)==True:
+        if Twitch_API().check_streamer_existence(streamer)==True:
             if self.twitch_db.check_existance(streamer)==False:
                 self.twitch_db.add_streamer(streamer)
             else:
@@ -47,7 +48,33 @@ class Twitch_live_list(commands.Cog):
     @app_commands.checks.has_any_role(683637694903222382, 862315076346052628)
     async def registered_streamers(self, interaction: discord.Interaction):
         await interaction.response.defer()
-        await interaction.followup.send(embed = dc_functions.embed_all_streamers())
+        await interaction.followup.send(embed = utilities.embed_all_streamers())
+    
+    @app_commands.command(name = "clear_ttv", description = "Clear streamers live lists.")
+    @app_commands.checks.has_any_role(683637694903222382, 862315076346052628)
+    async def clear_live_lists(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        categories = {
+                    "Apex Legends": [993829164392132668,1002583106252972032, 'https://static-cdn.jtvnw.net/ttv-boxart/511224-285x380.jpg', discord.Color.dark_red()],
+                    "Just Chatting": [994278145509310485, 1002583145553596416,'https://static-cdn.jtvnw.net/ttv-boxart/509658-285x380.jpg', discord.Color.from_rgb(201, 199, 191)],
+                    "Phasmophobia": [994279106210439238, 1002583186188025857, 'https://static-cdn.jtvnw.net/ttv-boxart/518184_IGDB-285x380.jpg', discord.Color.from_rgb(36, 35, 34)],
+                    "VALORANT": [994279798484516905, 1002583252441247924, 'https://static-cdn.jtvnw.net/ttv-boxart/516575-285x380.jpg', discord.Color.from_rgb(252, 40, 51)],
+                    "League of Legends": [994280414686498937, 1002583268518010991, 'https://static-cdn.jtvnw.net/ttv-boxart/21779-285x380.jpg', discord.Color.from_rgb(1, 110, 32)],
+                    }
+        for category in categories:           
+            category_id = self.bot.get_channel(categories[category][0])
+            channels = category_id.channels  # Get all channels of the category
+            for channel in channels:  # We search for all channels in a loop
+                try:
+                    await channel.delete()  # Delete all channels
+                except AttributeError:  # If the category does not exist/channels are gone
+                    pass
+            channel = self.bot.get_channel(1002582923121274890)
+            message = await channel.fetch_message(categories[category][1])
+            embed = discord.Embed(title=f"__**{category}**__", timestamp= datetime.datetime.utcnow(), color=categories[category][3])
+            embed.set_thumbnail(url=f'{categories[category][2]}')
+            await message.edit(embed=embed,content='')
+        await interaction.followup.send("Cleared.")
     
     # @app_commands.command()
     # @commands.has_any_role(683637694903222382, 862315076346052628)
@@ -74,6 +101,8 @@ class Twitch_live_list(commands.Cog):
 
     @tasks.loop(minutes=8)
     async def update_ttv_category(self):
+        await self.bot.wait_until_ready()
+        print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),'| Updating streamers live list...')
         categories = {
                     "Apex Legends": [993829164392132668,1002583106252972032, 'https://static-cdn.jtvnw.net/ttv-boxart/511224-285x380.jpg', discord.Color.dark_red()],
                     "Just Chatting": [994278145509310485, 1002583145553596416,'https://static-cdn.jtvnw.net/ttv-boxart/509658-285x380.jpg', discord.Color.from_rgb(201, 199, 191)],
@@ -83,7 +112,7 @@ class Twitch_live_list(commands.Cog):
                     }
         cut_nicknames = {"tsm_imperialhal": "imperial", "sweetdreams": "sweet", "diegosaurs": "diego", "Alliance_Hakis": "hakis", "EnemyAPEX": "enemy",
                         "YoungMulti": "Multi", "Pago3": "pago", "IzakOOO": "izak", "parisplatynov": "parisplat", "mrs_nocka": "nocka", "btyr3kt": "r3kt"}
-        streamers = dc_functions.create_streamers_list()
+        streamers = await utilities.create_streamers_list()
         guild = self.bot.get_guild(610920227085221898)  # <-- insert yor guild id here
 
         for category in categories:
@@ -119,16 +148,17 @@ class Twitch_live_list(commands.Cog):
             for streamer in streamers_by_category:
                 try:
                     if streamer[0] in cut_nicknames:
-                        await guild.create_voice_channel(f"🟢  {cut_nicknames[streamer[0]].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category_id, reason=None)
+                        await guild.create_voice_channel(f"🟢  {cut_nicknames[streamer[0]].upper()}  👤: ≈ {streamer[1]}", category=category_id, reason=None)
                         embed.add_field(name=f'{pos}. 🟢 {cut_nicknames[streamer[0]].capitalize()} \n👤: ≈ {streamer[1]}', value=f'https://www.twitch.tv/{streamer[0].casefold()}', inline=False)
                         pos+=1
                     else:
-                        await guild.create_voice_channel(f"🟢  {streamer[0].upper()}  👤: ≈ {streamer[1]}", overwrites=None, category=category_id, reason=None)
+                        await guild.create_voice_channel(f"🟢  {streamer[0].upper()}  👤: ≈ {streamer[1]}", category=category_id, reason=None)
                         embed.add_field(name=f'{pos}. 🟢 {streamer[0].capitalize()} \n👤: ≈ {streamer[1]}', value=f'https://www.twitch.tv/{streamer[0].casefold()}', inline=False)
                         pos+=1
                 except Exception as errors:
                     print(f"Bot Error: {errors}")
             await message.edit(embed=embed,content='')
+        print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),'| Updated streamers live list.')
             
             
 async def setup(bot :commands.Bot):

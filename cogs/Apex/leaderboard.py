@@ -4,8 +4,8 @@ from discord.app_commands import Choice
 from discord.ext import commands, tasks
 import datetime
 import time
-import dc_functions
-import API_functions
+import utilities
+from APIs.apex_api import Apex_API
 import mongo_database
 
 
@@ -14,11 +14,12 @@ class ApexLegends_leaderboard(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.apex_db = mongo_database.apex_db()
+        self.IDs_leaderboard = [1054045651882737775,1054045666416013462,1054045682564083823,1054045744568487946,1054045761882575000,1054045774704541727,1054045853448413196]
+        self.update_leaderboard.start(971385355062370334,self.IDs_leaderboard)
         
-
     @app_commands.command(name = "help", description = "How to register to leaderboard",)
     async def help(self, interaction: discord.Interaction):
-        await interaction.response.send_message(embed= dc_functions.embed_help())
+        await interaction.response.send_message(embed= utilities.embed_help())
 
     
     @app_commands.describe(platform= "Choose platform", nickname="Your origin nickname")
@@ -33,7 +34,7 @@ class ApexLegends_leaderboard(commands.Cog):
         platforms=('PC','PS4','X1')
         if self.apex_db.check_existance(str(interaction.user.id))==False: 
             if platform in platforms:                   
-                if API_functions.get_rankScore(platform,nickname)!=None:
+                if Apex_API().get_rankScore(platform,nickname)!=None:
                     self.apex_db.add_player(platform, nickname, str(interaction.user.id))
                     await interaction.followup.send('Zarejestrowano.')
                 else:
@@ -59,6 +60,7 @@ class ApexLegends_leaderboard(commands.Cog):
 
     @tasks.loop(hours=1)
     async def update_leaderboard(self, channel_id, message_IDs: dict):
+        await self.bot.wait_until_ready()
         print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),'| Updating leaderboard...')
         ranks={
                 'Apex Predator': discord.Color.dark_red(),
@@ -72,7 +74,7 @@ class ApexLegends_leaderboard(commands.Cog):
         IDs=message_IDs
         channel= self.bot.get_channel(channel_id)
         var=0
-        players=dc_functions.creating_rank_dict()
+        players= await utilities.creating_rank_dict()
         players=sorted(players.items(), key=lambda x: x[1][1], reverse=True)
         for x in ranks:        
             message = await channel.fetch_message(IDs[var])
@@ -91,7 +93,7 @@ class ApexLegends_leaderboard(commands.Cog):
                     if x=='Apex Predator':
                         embed.add_field(name=str(pos)+f'**. {user.name}**', value=player+' | RP '+str(RP), inline=False)
                     else:
-                        embed.add_field(name=str(pos)+f'**. {user.name}**', value='```'+player+' | '+f'{x} {y[1][2]}'+'\n'+dc_functions.rank_progress_bar(RP,x,y[1][2])+'```', inline=False)
+                        embed.add_field(name=str(pos)+f'**. {user.name}**', value='```'+player+' | '+f'{x} {y[1][2]}'+'\n'+utilities.rank_progress_bar(RP,x,y[1][2])+'```', inline=False)
                     pos+=1
             var+=1
             await message.edit(embed=embed,content='')

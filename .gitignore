@@ -1,6 +1,5 @@
 .env
 __pycache__/functions.cpython-310.pyc
-
 __pycache__/dc_functions.cpython-310.pyc
 __pycache__/dc_functions.cpython-39.pyc
 __pycache__/functions.cpython-39.pyc
@@ -10,3 +9,7 @@ cogs/Apex/__pycache__/embeds.cpython-39.pyc
 cogs/Apex/__pycache__/leaderboard.cpython-39.pyc
 cogs/Twitch/__pycache__/streamers_live_list.cpython-39.pyc
 cogs/__pycache__/exception_handler.cpython-39.pyc
+.vscode/settings.json
+__pycache__/utilities.cpython-39.pyc
+APIs/__pycache__/apex_api.cpython-39.pyc
+APIs/__pycache__/twitch_api.cpython-39.pyc
