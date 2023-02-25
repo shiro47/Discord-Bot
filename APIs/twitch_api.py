@@ -30,10 +30,10 @@ class Twitch_API():
                 time.sleep(5)
                 stream = requests.get('https://api.twitch.tv/helix/streams?user_login=' + streamer_name, headers=headers)
         stream_data = stream.json();
-
+        
         if len(stream_data['data']) == 1:
             #print(streamer_name + ' is live: ' + stream_data['data'][0]['title'] + ' playing ' + stream_data['data'][0]['game_name']);
-            return True, stream_data["data"][0]['viewer_count'], stream_data["data"][0]['game_name']
+            return True, stream_data["data"][0]['viewer_count'], stream_data["data"][0]['game_name'], f"https://static-cdn.jtvnw.net/ttv-boxart/{stream_data['data'][0]['game_id']}-285x380.jpg"
         else:
             return False
             #print(streamer_name + ' is not live');
@@ -65,4 +65,5 @@ class Twitch_API():
             return False
         else:
             return True
+    
     

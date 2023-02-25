@@ -13,3 +13,13 @@ cogs/__pycache__/exception_handler.cpython-39.pyc
 __pycache__/utilities.cpython-39.pyc
 APIs/__pycache__/apex_api.cpython-39.pyc
 APIs/__pycache__/twitch_api.cpython-39.pyc
+__pycache__/mongo_database.cpython-311.pyc
+__pycache__/utilities.cpython-311.pyc
+.vscode/launch.json
+.vscode/tasks.json
+APIs/__pycache__/apex_api.cpython-311.pyc
+APIs/__pycache__/twitch_api.cpython-311.pyc
+cogs/__pycache__/exception_handler.cpython-311.pyc
+cogs/Apex/__pycache__/embeds.cpython-311.pyc
+cogs/Apex/__pycache__/leaderboard.cpython-311.pyc
+cogs/Twitch/__pycache__/streamers_live_list.cpython-311.pyc
