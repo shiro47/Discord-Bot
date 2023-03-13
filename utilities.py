@@ -43,7 +43,9 @@ def creating_rank_dict(guild_id):
     for player in db.get_all_players():
         playerID=player['DiscordID']
         platform1=player['platform']
-        players.update({playerID:apex_api.get_rankScore(platform1,player['ID'])})                   
+        data = apex_api.get_rankScore(platform1,player['ID'])
+        if data!=None: 
+            players.update({playerID: data})                   
     return sorted(players.items(), key=lambda x: x[1][1], reverse=True)
 
 
