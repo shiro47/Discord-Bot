@@ -32,7 +32,7 @@ def embed_help():
 
 def embed_pred():
     values=apex_api.pred_threshold()
-    embed = discord.Embed(title='BR Predator Threshold: '+str(values[0])+' RP\n`Total Masters and Preds:` '+str(values[1])+' \n\nArena Predator Threshold: '+str(values[2])+' RP\n`Total Masters and Preds:` '+str(values[3]), color=discord.Color.dark_red(),timestamp= datetime.datetime.utcnow())
+    embed = discord.Embed(title='BR Predator Threshold: '+str(values[0])+' RP\n`Total Masters and Preds:` '+str(values[1]), color=discord.Color.dark_red(),timestamp= datetime.datetime.utcnow())
     embed.set_thumbnail(url="https://api.mozambiquehe.re/assets/ranks/apexpredator1.png")
     return embed
 
@@ -107,13 +107,13 @@ def embed_map_rotation():
 def rank_progress_bar(RP,rank, rank_division):
     if rank=='Master':
         pred_rp=apex_api.pred_threshold()[0]
-        return tqdm.format_meter(RP-15000,pred_rp-15000,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=pred_rp )
+        return tqdm.format_meter(RP-24000,pred_rp-24000,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=pred_rp )
     ranks = {
-        'Diamond': [11400, 12300, 13200, 14100],
-        'Platinum': [8200, 9000, 9800, 10600],
-        'Gold': [5400, 6100, 6800, 7500],
-        'Silver': [3000, 3600, 4200, 4800],
-        'Bronze': [1000, 1500, 2000, 2500]
+        'Diamond': list(range(20000, 24000, 1000)),
+        'Platinum': list(range(16000, 20000, 1000)),
+        'Gold': list(range(12000, 16000, 1000)),
+        'Silver': list(range(8000, 12000, 1000)),
+        'Bronze': list(range(4000, 8000, 1000))
     }
     rank_divisions={
         4:0,
@@ -122,9 +122,7 @@ def rank_progress_bar(RP,rank, rank_division):
         1:3,
         }
     total_rank_rp = ranks[rank][1]-ranks[rank][0]
-    for n in rank_divisions:
-        if n==rank_division:
-            rank_number=rank_divisions[n]
+    rank_number = rank_divisions.get(rank_division)
     return tqdm.format_meter(RP-ranks[rank][rank_number],total_rank_rp,0,bar_format='{desc} RP  |{bar}|  {postfix} RP', ncols=40, prefix=f"{RP}", postfix=ranks[rank][rank_number]+total_rank_rp)
 
 @to_thread

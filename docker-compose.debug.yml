@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+  discordbot:
+    image: discordbot
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    command: ["sh", "-c", "pip install debugpy -t /tmp && python /tmp/debugpy --wait-for-client --listen 0.0.0.0:8080 main.py "]
+    ports:
+      - 8080:8080

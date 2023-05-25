@@ -18,18 +18,17 @@ class Apex_API():
     def pred_threshold(self):
         www2=requests.get(f'https://api.mozambiquehe.re/predator?auth={self.token}')
         if www2.status_code!=200:
-            print(f'{self.errors[www2.status_code]}. Fixing error {www2.status_code}...')
+            print(f'{self.errors[www2.status_code]} Fixing error {www2.status_code}...')
             time.sleep(5)
             return self.pred_threshold()
         if www2.status_code==200:
             try:
                 parsed_json = (json.dumps(www2.json()))
                 BR_info = (json.loads(parsed_json)["RP"]["PC"])
-                ARENA_info = (json.loads(parsed_json)["AP"]["PC"])
             except KeyError:
                 time.sleep(5)
                 return self.pred_threshold()
-            return BR_info['val'], BR_info['totalMastersAndPreds'], ARENA_info['val'], ARENA_info['totalMastersAndPreds']
+            return BR_info['val'], BR_info['totalMastersAndPreds']
 
     def get_rankScore(self,platform,player):
         www2=requests.get(f'https://api.mozambiquehe.re/bridge?auth={self.token}&player={player}&platform={platform}')
@@ -37,7 +36,7 @@ class Apex_API():
             print(f"{www2.status_code}: {self.fatal_errors[www2.status_code]} ({platform}, {player})")
             return None
         if www2.status_code!=200:
-            print(f'{self.errors[www2.status_code]}. Fixing error {www2.status_code}...')
+            print(f'{self.errors[www2.status_code]} Fixing error {www2.status_code}...')
             time.sleep(5)
             return self.get_rankScore(platform,player)
         if www2.status_code==200:
@@ -53,7 +52,7 @@ class Apex_API():
     def map_rotation_data(self):
         www2=requests.get(f'https://api.mozambiquehe.re/maprotation?auth={self.token}')
         if www2.status_code!=200:
-            print(f'{self.errors[www2.status_code]}. Fixing error {www2.status_code}...')
+            print(f'{self.errors[www2.status_code]} Fixing error {www2.status_code}...')
             time.sleep(5)
             return self.map_rotation_data()
         if www2.status_code==200:
