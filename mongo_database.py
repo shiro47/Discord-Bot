@@ -10,11 +10,12 @@ class config_db():
         self.server= client[server_id]
         self.collection = self.server["CONFIG"]
 
-    def create_ids_for_map_rotation(self,channel_id, message_id):
+    def create_ids_for_map_rotation(self,channel_id, message_id, message_id_ranked):
         data={
                 "Name":"Map_rotation",
                 "channel_id":channel_id, 
-                "message_id":message_id
+                "message_id":message_id,
+                "message_id_ranked":message_id_ranked
             }
         if not self.collection.find_one({"Name":"Map_rotation"}):
             self.collection.insert_one(data)
@@ -100,7 +101,7 @@ class twitch_db():
         return False
     
     def remove_streamer(self, streamer):
-        if self.check_existance(streamer)==False:
+        if self.check_existance(streamer)==True:
             self.collection.delete_one({"streamer_name":streamer})
             return True
         return False

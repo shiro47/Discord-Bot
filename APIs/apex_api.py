@@ -50,7 +50,7 @@ class Apex_API():
 
 
     def map_rotation_data(self):
-        www2=requests.get(f'https://api.mozambiquehe.re/maprotation?auth={self.token}')
+        www2=requests.get(f'https://api.mozambiquehe.re/maprotation?auth={self.token}&version=2')
         if www2.status_code!=200:
             print(f'{self.errors[www2.status_code]} Fixing error {www2.status_code}...')
             time.sleep(5)
@@ -58,11 +58,13 @@ class Apex_API():
         if www2.status_code==200:
             try:
                 parsed_json=(json.dumps(www2.json()))
-                current_map_info=(json.loads(parsed_json)["current"])
-                next_map_info=(json.loads(parsed_json)["next"])
+                current_map_info=(json.loads(parsed_json)["battle_royale"]["current"])
+                next_map_info=(json.loads(parsed_json)["battle_royale"]["next"])
+                ranked_current_map_info=(json.loads(parsed_json)["ranked"]["current"])
+                ranked_next_map_info=(json.loads(parsed_json)["ranked"]["next"])
             except KeyError:
                 time.sleep(5)
                 return self.map_rotation_data()
-            return current_map_info['map'], current_map_info['remainingTimer'], next_map_info['map'], next_map_info['readableDate_start'], next_map_info['readableDate_end']
-        
+            return {"pubs":[current_map_info['map'], current_map_info['remainingTimer'], next_map_info['map'], next_map_info['readableDate_start'], next_map_info['readableDate_end'],current_map_info['asset']],
+                    "ranked":[ranked_current_map_info['map'], ranked_current_map_info['remainingTimer'], ranked_next_map_info['map'], ranked_next_map_info['readableDate_start'], ranked_next_map_info['readableDate_end'],ranked_current_map_info['asset']]}
         

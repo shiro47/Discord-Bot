@@ -27,8 +27,10 @@ class ApexLegends_embeds(commands.Cog):
         guild_id = interaction.guild_id
         channel_id = interaction.channel_id
         channel = self.bot.get_channel(channel_id)
-        message = await channel.send(embed= utilities.embed_map_rotation())
-        config_db(server_id=str(guild_id)).create_ids_for_map_rotation(channel_id=channel_id, message_id=message.id)
+        embeds=utilities.embed_map_rotation()
+        pubs_message = await channel.send(embed= embeds[0], content="Pubs:")
+        ranked_message = await channel.send(embed= embeds[1], content="Ranked:")
+        config_db(server_id=str(guild_id)).create_ids_for_map_rotation(channel_id=channel_id, message_id=pubs_message.id, message_id_ranked=ranked_message.id)
         
     @tasks.loop(hours=1)
     async def update_pred(self):
@@ -56,14 +58,18 @@ class ApexLegends_embeds(commands.Cog):
             ids = config.check_ids_for_map_rotation()
             if ids !=False:
                 print(datetime.datetime.now().strftime(
-                    "%Y-%m-%d %H:%M:%S"), f'|Server: {guild.name} | Updating map rotation...')
+                    "%Y-%m-%d %H:%M:%S"), f'|Server: {guild.name} | Updating map rotations...')
                 try:
                     channel = self.bot.get_channel(int(ids["channel_id"]))
                     message = await channel.fetch_message(int(ids["message_id"]))
-                    await message.edit(embed=utilities.embed_map_rotation(), content='')
+                    await message.edit(embed=utilities.embed_map_rotation()[0], content='Pubs:')
                     print(datetime.datetime.now().strftime(
                         "%Y-%m-%d %H:%M:%S"), f'|Server: {guild.name} | Map rotation updated.')
-                except discord.errors.NotFound:
+                    ranked_message = await channel.fetch_message(int(ids["message_id_ranked"]))
+                    await ranked_message.edit(embed=utilities.embed_map_rotation()[1], content='Ranked:')
+                    print(datetime.datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"), f'|Server: {guild.name} | Ranked map rotation updated.')
+                except (discord.errors.NotFound, KeyError):
                     print(datetime.datetime.now().strftime(
                         "%Y-%m-%d %H:%M:%S"), f'|Server: {guild.name} | Map rotation message not found.')
         

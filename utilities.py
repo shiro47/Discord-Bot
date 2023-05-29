@@ -87,20 +87,18 @@ async def create_leaderboard_embeds(guild_id, bot):
 
 def embed_map_rotation():
     values=apex_api.map_rotation_data()
-    embed = discord.Embed(title=f'Aktualna mapa to: `{values[0]}`', timestamp= datetime.datetime.utcnow())
-    if len(values[0].split())>1:
-        word=values[0].split()
-        map='_'.join(word)
-        embed.set_image(url=f'https://apexlegendsstatus.com/assets/maps/{map}.png')
-    else:
-        embed.set_image(url=f'https://apexlegendsstatus.com/assets/maps/{values[0]}.png')
-    embed.add_field(name='Pozostały czas: ', value=f'`{values[1]}`',inline=False)
-    embed.add_field(name='Następna mapa: ', value=f'`{values[2]}`', inline=False)
-    time = datetime.datetime.strptime(values[3], "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours=2)
-    embed.add_field(name='Start: ', value=f'`{time.strftime("%H:%M:%S")}`')
-    time = datetime.datetime.strptime(values[4], "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours=2)
-    embed.add_field(name='Koniec: ', value=f'`{time.strftime("%H:%M:%S")}`')
-    return embed
+    embeds=[]
+    for mode in values.values():
+        embed = discord.Embed(title=f'Aktualna mapa to: `{mode[0]}`', timestamp= datetime.datetime.utcnow())
+        embed.set_image(url=mode[5])
+        embed.add_field(name='Pozostały czas: ', value=f'`{mode[1]}`',inline=False)
+        embed.add_field(name='Następna mapa: ', value=f'`{mode[2]}`', inline=False)
+        time = datetime.datetime.strptime(mode[3], "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours=2)
+        embed.add_field(name='Start: ', value=f'`{time.strftime("%H:%M:%S")}`')
+        time = datetime.datetime.strptime(mode[4], "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours=2)
+        embed.add_field(name='Koniec: ', value=f'`{time.strftime("%H:%M:%S")}`')
+        embeds.append(embed)
+    return embeds
 
 
 
